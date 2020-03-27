@@ -1,3 +1,10 @@
+Note
+=====
+This is a forked version from https://github.com/mskcc/vcf2maf with credits to Kandoth C et al. This forked copy may contain unstable code. Please refer to https://github.com/mskcc/vcf2maf for updates.
+
+Original readme from https://github.com/mskcc/vcf2maf :
+****
+
 vcf<img src="http://i.giphy.com/R6X7GehJWQYms.gif" width="30">maf
 =======
 
