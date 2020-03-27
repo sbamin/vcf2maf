@@ -8,19 +8,16 @@ From: ensemblorg/ensembl-vep:latest
 %help
   Visit https://sumner.verhaaklab.com and search for vep for related documentation.
 
-%setup
-  umask 0022
-  rm -rf ${SINGULARITY_ROOTFS}/opt/vcf2maf
-  mkdir -p ${SINGULARITY_ROOTFS}/opt/vcf2maf
-  chmod 755 ${SINGULARITY_ROOTFS}/opt/vcf2maf
-  echo "Copying vcf2maf at /opt/vcf2maf"
-  cp -r ./ ${SINGULARITY_ROOTFS}/opt/vcf2maf/
-  ls -alh ${SINGULARITY_ROOTFS}/opt/vcf2maf/
+## Be careful with the %setup section!
+## Commands under %setup are executed on the host system itself,
+## and is executed with elevated privileges.
+## DANGER: Commands in %setup can alter and potentially damage the host.
+## Prefer using either $files or git clone under %post section
 
 %labels
   Name vcf2maf
   Version v1.0_a071af6
-  Maintainer Samir B. Amin, tweet: sbamin, web: https://sbamin.com
+  Author Samir B. Amin, tweet: sbamin, web: https://sbamin.com
   Description Singularity image to run vcf2maf tool developed by Cyriac Kandoth, github: ckandoth. Build parameters were taken from Dockerfile, maintained by Michele Mattioni, Seven Bridges, <michele.mattioni@sbgenomics.com>
   Sourcecode https://github.com/sbamin/vcf2maf
   License https://github.com/mskcc/vcf2maf/blob/master/LICENSE
@@ -48,6 +45,23 @@ From: ensemblorg/ensembl-vep:latest
   echo "https://raw.githubusercontent.com/konradjk/loftee/v0.3-beta/splice_module.pl"
   echo -e "\nvep plugins can be installed outside container if needed"
 
+  echo -e "Copying vcf2maf source repository"
+  rm -rf /opt/vcf2maf
+  cd /opt
+  git clone https://github.com/sbamin/vcf2maf.git
+  echo "Check if copied files exists"
+  ls -alh /opt/vcf2maf
+  chmod 755 /opt/vcf2maf/vcf2maf.pl
+  ## this will error if file does not exists or not have exec (755) mode
+  command -v /opt/vcf2maf/vcf2maf.pl
+
+  VERSION_VEP="v99.2"
+  VERSION_VCF2MAF="v1.0_a071af6"
+  echo "VEP version is $VERSION_VEP"
+  echo "vcf2maf version is $VERSION_VCF2MAF"
+  echo 'export VERSION_VEP=v99.2' >> "$SINGULARITY_ENVIRONMENT"
+  echo 'export VERSION_VCF2MAF=v1.0_a071af6' >> "$SINGULARITY_ENVIRONMENT"
+
   echo -e "\n#####\nCleanup\n#####\n"
   apt-get clean
   rm -rf /var/lib/apt/lists/*
@@ -73,6 +87,6 @@ From: ensemblorg/ensembl-vep:latest
   singularity run --app vcf2maf image_name.simg <arguments for vcf2maf.pl>
 
 %runscript
-  exec echo -e "use command vep or /opt/vcf2maf/vcf2maf.pl to get started or \nsingularity run-help --app vep vcf2maf.sif\nsingularity run-help --app vcf2maf vcf2maf.sif"
+  exec echo -e "use command vep or /opt/vcf2maf/vcf2maf.pl at singularity exec to get started or \nsingularity run-help --app vep vcf2maf.sif\nsingularity run-help --app vcf2maf vcf2maf.sif"
 
 ## END ##
