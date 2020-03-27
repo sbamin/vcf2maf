@@ -1,0 +1,88 @@
+## Build Singularity container for vcf2maf, includes vep
+## Using v3.4 https://sylabs.io/guides/3.4/user-guide/definition_files.html
+Bootstrap: docker
+## Using vep v99.2, prefer replacing latest with specific tag
+## https://hub.docker.com/r/ensemblorg/ensembl-vep/tags
+From: ensemblorg/ensembl-vep:latest
+
+%help
+  Visit https://sumner.verhaaklab.com and search for vep for related documentation.
+
+%setup
+  umask 0022
+  rm -rf ${SINGULARITY_ROOTFS}/opt/vcf2maf
+  mkdir -p ${SINGULARITY_ROOTFS}/opt/vcf2maf
+  chmod 755 ${SINGULARITY_ROOTFS}/opt/vcf2maf
+  echo "Copying vcf2maf at /opt/vcf2maf"
+  cp -r ./ ${SINGULARITY_ROOTFS}/opt/vcf2maf/
+  ls -alh ${SINGULARITY_ROOTFS}/opt/vcf2maf/
+
+%labels
+  Name vcf2maf
+  Version v1.0_a071af6
+  Maintainer Samir B. Amin, tweet: sbamin, web: https://sbamin.com
+  Description Singularity image to run vcf2maf tool developed by Cyriac Kandoth, github: ckandoth
+  Sourcecode https://github.com/sbamin/vcf2maf
+  License https://github.com/mskcc/vcf2maf/blob/master/LICENSE
+  Contact Post container related issues at https://github.com/sbamin/vcf2maf else submit issues at https://github.com/mskcc/vcf2maf
+
+%post
+  echo -e "\n#####\nSet Env\n#####\n"
+
+  export DEBIAN_FRONTEND=noninteractive
+  export DEBCONF_NONINTERACTIVE_SEEN=true
+
+  echo -e "\n#####\nInstall devtools\n#####\n"
+  apt-get update && apt-get install --yes --no-install-recommends apt-utils \
+  build-essential git cpanminus curl wget unzip automake samtools tabix \
+  libmysqlclient-dev libncurses5-dev zlib1g-dev libgsl0-dev libexpat1-dev \
+  libgd-dev
+
+  echo -e "\n#####\nInstall perl libs\n#####\n"
+  cpanm --notest LWP::Simple DBI DBD::mysql Archive::Zip Archive::Extract HTTP::Tiny Test::Simple
+  cpanm --notest File::Copy::Recursive Perl::OSType Module::Metadata version TAP::Harness CGI Encode
+  cpanm --notest CPAN::Meta JSON DBD::SQLite Set::IntervalTree Archive::Tar Time::HiRes Module::Build
+  cpanm --notest Bio::Root::Version
+
+  echo -e "\nSkipping installation of VEP and related plugin from following source\n"
+  echo "https://raw.githubusercontent.com/konradjk/loftee/v0.3-beta/splice_module.pl"
+  echo -e "\nvep plugins can be installed outside container if needed"
+
+  echo -e "\n#####\nUpdate Env\n#####\nIncluding paths exported from vep docker image\n"
+  PATH=/opt/vcf2maf:/opt/vep/src/ensembl-vep:/opt/vep/src/var_c_code:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"${PATH:+:$PATH}"
+  PERL5LIB=/opt/vep/src/ensembl-vep:/opt/vep/src/ensembl-vep/modules"${PERL5LIB:+:$PERL5LIB}"
+
+  export PATH PERL5LIB
+
+  echo -e "\n#####\nCleanup\n#####\n"
+  apt-get clean
+  rm -rf /var/lib/apt/lists/*
+
+##############################
+# VEP
+##############################
+
+%apprun vep
+  exec vep "$@"
+
+%apphelp vep
+  Get to vep prompt, e.g.,
+
+  singularity run --app vep image_name.simg
+
+%apprun vcf2maf
+  exec /opt/vcf2maf/vcf2maf.pl "$@"
+
+%apphelp vcf2maf
+  Run vcf2maf script from shell, e.g.,
+
+  singularity run --app vcf2maf image_name.simg <arguments for vcf2maf.pl>
+
+##############################
+# default command
+##############################
+
+%runscript
+  exec echo "use command vep or /opt/vcf2maf/vcf2maf.pl to get started"
+
+## END ##
