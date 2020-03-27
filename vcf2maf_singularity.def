@@ -21,7 +21,7 @@ From: ensemblorg/ensembl-vep:latest
   Name vcf2maf
   Version v1.0_a071af6
   Maintainer Samir B. Amin, tweet: sbamin, web: https://sbamin.com
-  Description Singularity image to run vcf2maf tool developed by Cyriac Kandoth, github: ckandoth
+  Description Singularity image to run vcf2maf tool developed by Cyriac Kandoth, github: ckandoth. Build parameters were taken from Dockerfile, maintained by Michele Mattioni, Seven Bridges, <michele.mattioni@sbgenomics.com>
   Sourcecode https://github.com/sbamin/vcf2maf
   License https://github.com/mskcc/vcf2maf/blob/master/LICENSE
   Contact Post container related issues at https://github.com/sbamin/vcf2maf else submit issues at https://github.com/mskcc/vcf2maf
@@ -48,19 +48,13 @@ From: ensemblorg/ensembl-vep:latest
   echo "https://raw.githubusercontent.com/konradjk/loftee/v0.3-beta/splice_module.pl"
   echo -e "\nvep plugins can be installed outside container if needed"
 
-  echo -e "\n#####\nUpdate Env\n#####\nIncluding paths exported from vep docker image\n"
-  PATH=/opt/vcf2maf:/opt/vep/src/ensembl-vep:/opt/vep/src/var_c_code:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"${PATH:+:$PATH}"
-  PERL5LIB=/opt/vep/src/ensembl-vep:/opt/vep/src/ensembl-vep/modules"${PERL5LIB:+:$PERL5LIB}"
-
-  export PATH PERL5LIB
-
   echo -e "\n#####\nCleanup\n#####\n"
   apt-get clean
   rm -rf /var/lib/apt/lists/*
 
-##############################
-# VEP
-##############################
+%environment
+  SINGULARITYENV_APPEND_PATH=/opt/vcf2maf
+  export SINGULARITYENV_APPEND_PATH
 
 %apprun vep
   exec vep "$@"
@@ -78,11 +72,7 @@ From: ensemblorg/ensembl-vep:latest
 
   singularity run --app vcf2maf image_name.simg <arguments for vcf2maf.pl>
 
-##############################
-# default command
-##############################
-
 %runscript
-  exec echo "use command vep or /opt/vcf2maf/vcf2maf.pl to get started"
+  exec echo -e "use command vep or /opt/vcf2maf/vcf2maf.pl to get started or \nsingularity run-help --app vep vcf2maf.sif\nsingularity run-help --app vcf2maf vcf2maf.sif"
 
 ## END ##
